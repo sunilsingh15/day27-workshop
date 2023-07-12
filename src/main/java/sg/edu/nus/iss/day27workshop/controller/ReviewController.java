@@ -1,10 +1,14 @@
 package sg.edu.nus.iss.day27workshop.controller;
 
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,7 +24,7 @@ public class ReviewController {
     @Autowired
     ReviewService service;
 
-    @PostMapping(path = "/review", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @PostMapping(path = "/review", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> addReview(Review review) {
 
         if (!service.checkIfGameExists(review.getGameID())) {
@@ -44,6 +48,39 @@ public class ReviewController {
                 .build();
 
         return new ResponseEntity<String>(successJson.toString(), HttpStatus.OK);
+    }
+
+    @PutMapping(path = "/review/{reviewID}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> updateReview(@PathVariable String reviewID, @RequestBody Document toUpdate) {
+
+        if (!service.checkIfReviewExists(reviewID)) {
+            JsonObject errorJson = Json.createObjectBuilder()
+                    .add("error", "No review with ID " + reviewID + " found")
+                    .build();
+            return new ResponseEntity<String>(errorJson.toString(), HttpStatus.NOT_FOUND);
+        }
+
+        if (toUpdate.getInteger("rating") > 10 || toUpdate.getInteger("rating") < 1) {
+            JsonObject errorJson = Json.createObjectBuilder()
+                    .add("error", toUpdate.getInteger("rating") + " is not a valid rating between 1 - 10.")
+                    .build();
+            return new ResponseEntity<String>(errorJson.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        if (service.updateReviewToDatabase(toUpdate, reviewID)) {
+            JsonObject successJson = Json.createObjectBuilder()
+                    .add("success", "Review updated successfully.")
+                    .build();
+
+            return new ResponseEntity<String>(successJson.toString(), HttpStatus.OK);
+        } else {
+            JsonObject errorJson = Json.createObjectBuilder()
+                    .add("error", "There has been an error updating your review. Please try again.")
+                    .build();
+
+            return new ResponseEntity<String>(errorJson.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     }
 
 }

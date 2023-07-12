@@ -31,5 +31,14 @@ public class ReviewService {
 
         return repository.addReviewToDatabase(reviewDocument);
     }
-    
+
+    public Boolean checkIfReviewExists(String reviewID) {
+        return repository.checkIfReviewExistsByID(reviewID);
+    }
+
+    public Boolean updateReviewToDatabase(Document toUpdate, String reviewID) {
+        toUpdate.append("posted", new Date().toString());
+        return repository.addUpdateToReview(toUpdate, reviewID);
+    }
+
 }
