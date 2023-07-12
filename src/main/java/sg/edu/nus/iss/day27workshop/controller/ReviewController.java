@@ -1,6 +1,7 @@
 package sg.edu.nus.iss.day27workshop.controller;
 
 import java.util.Date;
+import java.util.List;
 
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import sg.edu.nus.iss.day27workshop.model.Review;
 import sg.edu.nus.iss.day27workshop.service.ReviewService;
@@ -107,6 +109,60 @@ public class ReviewController {
                 .add("posted", reviewDocument.getString("posted"))
                 .add("name", reviewDocument.getString("name"))
                 .add("edited", service.isReviewEdited(reviewDocument))
+                .add("timestamp", new Date().toString())
+                .build();
+
+        return new ResponseEntity<String>(reviewJson.toString(), HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/review/{reviewID}/history", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> viewReviewHistory(@PathVariable String reviewID) {
+
+        if (!service.checkIfReviewExists(reviewID)) {
+            JsonObject errorJson = Json.createObjectBuilder()
+                    .add("error", "No review found with ID " + reviewID + ".")
+                    .build();
+
+            return new ResponseEntity<String>(errorJson.toString(), HttpStatus.NOT_FOUND);
+        }
+
+        Document reviewDocument = service.getReviewByID(reviewID);
+        List<Document> editedArray = reviewDocument.getList("edited", Document.class);
+
+        if (editedArray == null) {
+            JsonObject reviewJson = Json.createObjectBuilder()
+                    .add("user", reviewDocument.getString("user"))
+                    .add("rating", reviewDocument.getInteger("rating"))
+                    .add("comment", reviewDocument.getString("comment"))
+                    .add("ID", reviewDocument.getInteger("ID"))
+                    .add("posted", reviewDocument.getString("posted"))
+                    .add("name", reviewDocument.getString("name"))
+                    .add("timestamp", new Date().toString())
+                    .build();
+
+            return new ResponseEntity<String>(reviewJson.toString(), HttpStatus.OK);
+        }
+
+        JsonArrayBuilder editedComments = Json.createArrayBuilder();
+
+        for (Document document : editedArray) {
+            JsonObject comment = Json.createObjectBuilder()
+                    .add("comment", document.getString("comment"))
+                    .add("rating", document.getInteger("rating"))
+                    .add("posted", document.getString("posted"))
+                    .build();
+
+            editedComments.add(comment);
+        }
+
+        JsonObject reviewJson = Json.createObjectBuilder()
+                .add("user", reviewDocument.getString("user"))
+                .add("rating", reviewDocument.getInteger("rating"))
+                .add("comment", reviewDocument.getString("comment"))
+                .add("ID", reviewDocument.getInteger("ID"))
+                .add("posted", reviewDocument.getString("posted"))
+                .add("name", reviewDocument.getString("name"))
+                .add("edited", editedComments.build())
                 .add("timestamp", new Date().toString())
                 .build();
 

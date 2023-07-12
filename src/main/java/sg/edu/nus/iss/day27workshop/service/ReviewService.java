@@ -42,6 +42,10 @@ public class ReviewService {
         return repository.addUpdateToReview(toUpdate, reviewID);
     }
 
+    public Document getReviewByID(String reviewID) {
+        return repository.getReviewByID(reviewID);
+    }
+
     public Document viewLatestReviewByID(String reviewID) {
         Document review = repository.getReviewByID(reviewID);
 
@@ -58,7 +62,7 @@ public class ReviewService {
             review.put("comment", latestComment.get("comment"));
             review.put("rating", latestComment.get("rating"));
             review.put("posted", latestComment.get("posted"));
-            
+
             return review;
         }
     }
