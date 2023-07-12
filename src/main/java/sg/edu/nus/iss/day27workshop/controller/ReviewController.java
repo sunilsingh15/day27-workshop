@@ -1,10 +1,13 @@
 package sg.edu.nus.iss.day27workshop.controller;
 
+import java.util.Date;
+
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -81,6 +84,33 @@ public class ReviewController {
             return new ResponseEntity<String>(errorJson.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+    }
+
+    @GetMapping(path = "/review/{reviewID}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> viewLatestReview(@PathVariable String reviewID) {
+
+        if (!service.checkIfReviewExists(reviewID)) {
+            JsonObject errorJson = Json.createObjectBuilder()
+                    .add("error", "No review exists with ID " + reviewID + ".")
+                    .build();
+
+            return new ResponseEntity<String>(errorJson.toString(), HttpStatus.NOT_FOUND);
+        }
+
+        Document reviewDocument = service.viewLatestReviewByID(reviewID);
+
+        JsonObject reviewJson = Json.createObjectBuilder()
+                .add("user", reviewDocument.getString("user"))
+                .add("rating", reviewDocument.getInteger("rating"))
+                .add("comment", reviewDocument.getString("comment"))
+                .add("ID", reviewDocument.getInteger("ID"))
+                .add("posted", reviewDocument.getString("posted"))
+                .add("name", reviewDocument.getString("name"))
+                .add("edited", service.isReviewEdited(reviewDocument))
+                .add("timestamp", new Date().toString())
+                .build();
+
+        return new ResponseEntity<String>(reviewJson.toString(), HttpStatus.OK);
     }
 
 }

@@ -55,4 +55,8 @@ public class ReviewRepository {
         return result.wasAcknowledged();
     }
 
+    public Document getReviewByID(String reviewID) {
+        return template.findOne(Query.query(Criteria.where("_id").is(reviewID)), Document.class, "reviews");
+    }
+
 }
